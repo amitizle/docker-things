@@ -11,3 +11,5 @@ services:
       PG_DATA: /var/lib/postgresql/data
     volumes:
       - /var/lib/postgresql/data
+    secrets:
+      - postgres_admin_password
