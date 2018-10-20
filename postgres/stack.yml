@@ -13,3 +13,7 @@ services:
       - /var/lib/postgresql/data
     secrets:
       - postgres_admin_password
+
+secrets:
+  postgres_admin_password:
+    external: true
