@@ -1,0 +1,48 @@
+version: '3.1'
+
+services:
+  postgres:
+    image: postgres:alpine
+    restart: always
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/octobox_postgres_password
+      POSTGRES_USER: octobox
+      PG_DATA: /var/lib/postgresql/data
+      POSTGRESQL_DATABASE: octobox
+    volumes:
+      - /var/lib/postgresql/data
+    secrets:
+      - octobox_postgres_password
+
+  redis:
+    image: redis:alpine
+    restart: always
+
+  app:
+    image: octoboxio/octobox:latest
+    restart: always
+    ports:
+      - 9002:3000
+    environment:
+      RAILS_ENV: development
+      PERSONAL_ACCESS_TOKENS_ENABLED: "1"
+      RESTRICTED_ACCESS_ENABLED: "1"
+      OCTOBOX_BACKGROUND_JOBS_ENABLED: "0"
+      OCTOBOX_DATABASE_NAME: octobox
+      OCTOBOX_DATABASE_USERNAME: octobox
+      OCTOBOX_DATABASE_HOST: octobox_postgres
+      GITHUB_ORGANIZATION_ID: 44348155 # amitizles
+      REDIS_URL: redis://octobox_redis
+      ADMIN_GITHUB_IDS: amitizle
+    depends_on:
+      - postgres
+      - redis
+    secrets:
+      - source: octobox_env_file
+        target: /usr/src/app/.env
+
+secrets:
+  octobox_postgres_password:
+    external: true
+  octobox_env_file:
+    external: true
