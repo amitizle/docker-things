@@ -5,34 +5,33 @@ services:
     image: postgres:alpine
     restart: always
     environment:
-      POSTGRES_PASSWORD_FILE: /run/secrets/octobox_postgres_password
-      POSTGRES_USER: octobox
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_root_password
+      POSTGRES_USER: root
       PG_DATA: /var/lib/postgresql/data
-      POSTGRESQL_DATABASE: octobox
     volumes:
-      - /data/volumes/octobox/postgres:/var/lib/postgresql/data
+      - /data/volumes/postgres:/var/lib/postgresql/data
     secrets:
-      - octobox_postgres_password
-
+      - postgres_root_password
   redis:
     image: redis:alpine
     restart: always
-
-  app:
+  octobox:
     image: octoboxio/octobox:latest
     restart: always
     ports:
-      - 9002:3000
+      - 9002:5000
     environment:
       RAILS_ENV: development
-      PERSONAL_ACCESS_TOKENS_ENABLED: "1"
-      RESTRICTED_ACCESS_ENABLED: "1"
-      OCTOBOX_BACKGROUND_JOBS_ENABLED: "0"
+      PERSONAL_ACCESS_TOKENS_ENABLED: 1
+      RESTRICTED_ACCESS_ENABLED: 1
+      OCTOBOX_BACKGROUND_JOBS_ENABLED: 0
+      OCTOBOX_SIDEKIQ_SCHEDULE_ENABLED: 1
       OCTOBOX_DATABASE_NAME: octobox
       OCTOBOX_DATABASE_USERNAME: octobox
-      OCTOBOX_DATABASE_HOST: octobox_postgres
+      OCTOBOX_DATABASE_HOST: postgres
       GITHUB_ORGANIZATION_ID: 44348155 # amitizles
-      REDIS_URL: redis://octobox_redis
+      MINIMUM_REFRESH_INTERVAL: 2
+      REDIS_URL: redis://redis
       ADMIN_GITHUB_IDS: amitizle
     depends_on:
       - postgres
@@ -41,8 +40,16 @@ services:
       - source: octobox_env_file
         target: /usr/src/app/.env
 
+  znc:
+    image: znc:latest
+    restart: always
+    ports:
+      - 6697:6697
+    volumes:
+      - /data/volumes/znc:/znc-data
+
 secrets:
-  octobox_postgres_password:
-    external: true
   octobox_env_file:
+    external: true
+  postgres_root_password:
     external: true
